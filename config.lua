@@ -1,5 +1,6 @@
 Config = {}
 
+Config.ZiptieSpeed = 3 -- 3 seconds
 Config.HandcuffTimer = 10 * 60000 -- 10 minutes.
 Config.ZiptieRemovers = {
 	scissors = { -- Name of item.
@@ -11,3 +12,4 @@ Config.ZiptieRemovers = {
 		OneTimeUse = false
 	}
 }
+Config.qtarget = true -- Disable if you don't use qtarget.

@@ -15,26 +15,25 @@ for k,v in pairs(Config.ZiptieRemovers) do
 			local xPlayer = ESX.GetPlayerFromId(source)
 			xPlayer.removeInventoryItem(k, 1)
 		end
-
 	end)
 end
 
 RegisterServerEvent('bixbi_zipties:ApplyZipties')
-AddEventHandler('bixbi_zipties:ApplyZipties', function(target)
+AddEventHandler('bixbi_zipties:ApplyZipties', function(targetId)
 	local xPlayer = ESX.GetPlayerFromId(source)
 	local sourceItem = xPlayer.getInventoryItem('zipties')
 
 	if sourceItem.count >= 1 then
 		xPlayer.removeInventoryItem('zipties', 1)
-		TriggerClientEvent('bixbi_zipties:ziptie', target)
+		TriggerClientEvent('bixbi_zipties:ziptie', targetId)
 	else
-		TriggerClientEvent('esx:showNotification', xPlayer.source, "You do not have zipties.")
+		TriggerClientEvent('bixbi_core:Notify', xPlayer.source, 'error', 'You do not have zipties.')
 	end
 end)
 
 RegisterServerEvent('bixbi_zipties:RemoveZipties')
-AddEventHandler('bixbi_zipties:RemoveZipties', function(source)
-	TriggerClientEvent('bixbi_zipties:removeziptie', source)
+AddEventHandler('bixbi_zipties:RemoveZipties', function(targetId)
+	TriggerClientEvent('bixbi_zipties:removeziptie', targetId)
 end)
 
 AddEventHandler('onResourceStart', function(resourceName)

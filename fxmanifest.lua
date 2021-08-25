@@ -6,12 +6,20 @@ game 'gta5'
 author 'Leah#0001'
 version '1.2'
 
+shared_scripts {
+	'@es_extended/imports.lua',
+	'config.lua'
+}
+
 client_scripts {
-    'config.lua', 
     'client/client.lua'
 } 
  
 server_scripts {
-    'config.lua',
     'server/server.lua'
 } 
+
+exports {
+	"ToggleHandsUp",
+    "AreHandsUp"
+}
