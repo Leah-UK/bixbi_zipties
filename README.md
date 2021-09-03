@@ -1,4 +1,4 @@
-<h1 align='center'><a href='https://discord.gg/AYgEURmF7z/'>Discord</a></h1>
+<h1 align='center'><a href='https://discord.io/overextended/'>Discord</a></h1>
 <p align='center'><a href='https://forum.cfx.re/u/Leah_UK/summary'>FiveM Profile</a> | <a href='https://www.buymeacoffee.com/leah_uk'>Support Me Here</a><br></p>
 
 ---
