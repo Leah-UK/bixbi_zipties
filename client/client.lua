@@ -1,12 +1,9 @@
 local isCuffed = false
 local handcuffTimer = {}
-local playerPed = PlayerPedId() 
-
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler("esx:playerLoaded", function(xPlayer)
     ESX.PlayerData = xPlayer
- 	ESX.PlayerLoaded = true
-    playerPed = PlayerPedId()
+	ESX.PlayerLoaded = true
 	ZiptieLoop()
 end)
 
@@ -62,6 +59,7 @@ end
 
 RegisterNetEvent('bixbi_zipties:ziptie')
 AddEventHandler("bixbi_zipties:ziptie", function(source, tool)
+	local playerPed = PlayerPedId()
 	exports['bixbi_core']:Notify('error', 'You have been ziptied.')
 
 	if not isCuffed then
@@ -85,6 +83,7 @@ end)
 
 RegisterNetEvent('bixbi_zipties:removeziptie')
 AddEventHandler('bixbi_zipties:removeziptie', function()
+	local playerPed = PlayerPedId()
 	exports['bixbi_core']:Notify('', 'You are free again.')
 	if isCuffed then
 		isCuffed = false
@@ -142,6 +141,7 @@ function ZiptieLoop()
 				DisableControlAction(0, 142, true) -- Disable melee
 				DisableControlAction(0, 143, true) -- Disable melee
 	
+				local playerPed = PlayerPedId()
 				if IsEntityPlayingAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', 3) ~= 1 then
 					RequestAnimSet("re@stag_do@idle_a")
 					-- ScrappyCap: Potential Fix
@@ -167,7 +167,7 @@ if (Config.qtarget) then
 					required_item = "zipties",
 					canInteract = function(entity)
 						if IsPedAPlayer(entity) then
-							if (AreHandsUp(entity) and (IsPedArmed(PlayerPedId(), 4) or IsPedArmed(PlayerPedId(), 1))) then 
+							if (AreHandsUp(entity) and (IsPedArmed(PlayerPedId(), 4) or IsPedArmed(PlayerPedId(), 1)) and not IsPedDeadOrDying(entity, 1)) then 
 								return true
 							else
 								return false
@@ -191,7 +191,7 @@ Hands Up Code
 local isHandsUp = false
 RegisterNetEvent('bixbi_zipties:ToggleHandsUp')
 AddEventHandler('bixbi_zipties:ToggleHandsUp', function()
-	playerPed = PlayerPedId()
+	local playerPed = PlayerPedId()
 	if (DoesEntityExist(playerPed) and not IsEntityDead(playerPed) and not IsPauseMenuActive()) then 
 		RequestAnimDict('random@mugging3')
 		while not HasAnimDictLoaded('random@mugging3') do
