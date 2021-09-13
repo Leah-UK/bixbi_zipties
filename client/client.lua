@@ -4,7 +4,6 @@ RegisterNetEvent('esx:playerLoaded')
 AddEventHandler("esx:playerLoaded", function(xPlayer)
     ESX.PlayerData = xPlayer
 	ESX.PlayerLoaded = true
-	ZiptieLoop()
 end)
 
 RegisterNetEvent('esx:onPlayerLogout')
@@ -23,10 +22,15 @@ AddEventHandler("bixbi_zipties:startziptie", function(targetId)
 		if closestPlayer ~= -1 and closestDistance <= 2.0 then targetId = GetPlayerServerId(closestPlayer) end
 	end
 	
-	exports['bixbi_core']:Loading(Config.ZiptieSpeed * 1000, 'Applying zipties to person')
-	Citizen.Wait(Config.ZiptieSpeed * 1000)
-	TriggerServerEvent('bixbi_zipties:ApplyZipties', targetId)
-	exports['bixbi_core']:Notify('info', 'You have ziptied the target.')
+	if (AreHandsUp(GetPlayerPed(targetId))) then
+		exports['bixbi_core']:Loading(Config.ZiptieSpeed * 1000, 'Applying zipties to person')
+		Citizen.Wait(Config.ZiptieSpeed * 1000)
+		TriggerServerEvent('bixbi_zipties:ApplyZipties', targetId)
+		exports['bixbi_core']:Notify('success', 'You have ziptied the target.')
+	else
+		exports['bixbi_core']:Notify('error', 'This person doesn\'t have their hands up.')
+	end
+	
 end)
 
 RegisterNetEvent('bixbi_zipties:startziptieremove')
@@ -39,7 +43,7 @@ AddEventHandler("bixbi_zipties:startziptieremove", function(type, targetId)
 	exports['bixbi_core']:Loading(tool.timer * 1000, 'Removing zipties from person')
 	Citizen.Wait(tool.timer * 1000)
 	
-	exports['bixbi_core']:Notify('info', 'You have removed the ziptie.')
+	exports['bixbi_core']:Notify('', 'You have removed the ziptie.')
 	TriggerServerEvent('bixbi_zipties:RemoveZipties', targetId)
 end)
 
@@ -51,19 +55,20 @@ function StartHandcuffTimer()
 	handcuffTimer.active = true
 
 	handcuffTimer.task = ESX.SetTimeout(Config.HandcuffTimer, function()
-		exports['bixbi_core']:Notify('info', 'You feel the zipties slowly losing grip and fading away.')
+		exports['bixbi_core']:Notify('', 'You feel the zipties slowly losing grip and fading away.')
 		TriggerEvent('bixbi_zipties:removeziptie')
 		handcuffTimer.active = false
 	end)
 end
 
+local isZiptied = false
 RegisterNetEvent('bixbi_zipties:ziptie')
 AddEventHandler("bixbi_zipties:ziptie", function(source, tool)
 	local playerPed = PlayerPedId()
 	exports['bixbi_core']:Notify('error', 'You have been ziptied.')
 
-	if not isCuffed then
-		isCuffed = true
+	if (not isZiptied) then
+		isZiptied = true
 		exports['bixbi_core']:playAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', -1)
 		
 		SetEnableHandcuffs(playerPed, true)
@@ -77,16 +82,16 @@ AddEventHandler("bixbi_zipties:ziptie", function(source, tool)
 		end
 
 		StartHandcuffTimer()
+		ZiptieLoop()
 	end
-
 end)
 
 RegisterNetEvent('bixbi_zipties:removeziptie')
 AddEventHandler('bixbi_zipties:removeziptie', function()
 	local playerPed = PlayerPedId()
 	exports['bixbi_core']:Notify('', 'You are free again.')
-	if isCuffed then
-		isCuffed = false
+	if (isZiptied) then
+		isZiptied = false
 
 		ClearPedSecondaryTask(playerPed)
 		SetEnableHandcuffs(playerPed, false)
@@ -102,59 +107,53 @@ end)
 
 function ZiptieLoop()
 	Citizen.CreateThread(function()
-		while (ESX.PlayerLoaded) do
-			Citizen.Wait(0)
-	
-			if isCuffed then
-				EnableControlAction(0, 47, true)
-				DisableControlAction(0, 24, true) -- Attack
-				DisableControlAction(0, 257, true) -- Attack 2
-				DisableControlAction(0, 25, true) -- Aim
-				DisableControlAction(0, 263, true) -- Melee Attack 1
-	
-				DisableControlAction(0, 45, true) -- Reload
-				DisableControlAction(0, 22, true) -- Jump
-				DisableControlAction(0, 44, true) -- Cover
-				DisableControlAction(0, 37, true) -- Select Weapon
-	
-				DisableControlAction(0, 288,  true) -- Disable phone
-				DisableControlAction(0, 289, true) -- Inventory
-				DisableControlAction(0, 170, true) -- Animations
-				DisableControlAction(0, 167, true) -- Job
-	
-				DisableControlAction(0, 0, true) -- Disable changing view
-				DisableControlAction(0, 26, true) -- Disable looking behind
-				DisableControlAction(0, 73, true) -- Disable clearing animation
-				DisableControlAction(2, 199, true) -- Disable pause screen
-	
-				DisableControlAction(0, 59, true) -- Disable steering in vehicle
-				DisableControlAction(0, 71, true) -- Disable driving forward in vehicle
-				DisableControlAction(0, 72, true) -- Disable reversing in vehicle
-	
-				DisableControlAction(2, 36, true) -- Disable going stealth
-	
-				DisableControlAction(0, 47, true)  -- Disable weapon
-				DisableControlAction(0, 264, true) -- Disable melee
-				DisableControlAction(0, 257, true) -- Disable melee
-				DisableControlAction(0, 140, true) -- Disable melee
-				DisableControlAction(0, 141, true) -- Disable melee
-				DisableControlAction(0, 142, true) -- Disable melee
-				DisableControlAction(0, 143, true) -- Disable melee
-	
-				local playerPed = PlayerPedId()
-				if IsEntityPlayingAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', 3) ~= 1 then
-					RequestAnimSet("re@stag_do@idle_a")
-					-- ScrappyCap: Potential Fix
-					while (not HasAnimSetLoaded("re@stag_do@idle_a")) do 
-						Citizen.Wait(100)
-					end 
-					exports['bixbi_core']:playAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', -1)
-				end
-			else
-				Citizen.Wait(500)
+		while (isZiptied) do
+			Citizen.Wait(100)
+
+			-- EnableControlAction(0, 47, true)
+			DisableControlAction(0, 24, true) -- Attack
+			DisableControlAction(0, 257, true) -- Attack 2
+			DisableControlAction(0, 25, true) -- Aim
+			DisableControlAction(0, 263, true) -- Melee Attack 1
+
+			DisableControlAction(0, 45, true) -- Reload
+			DisableControlAction(0, 22, true) -- Jump
+			DisableControlAction(0, 44, true) -- Cover
+			DisableControlAction(0, 37, true) -- Select Weapon
+
+			DisableControlAction(0, 288,  true) -- Disable phone
+			DisableControlAction(0, 289, true) -- Inventory
+			DisableControlAction(0, 170, true) -- Animations
+			DisableControlAction(0, 167, true) -- Job
+
+			DisableControlAction(0, 0, true) -- Disable changing view
+			DisableControlAction(0, 26, true) -- Disable looking behind
+			DisableControlAction(0, 73, true) -- Disable clearing animation
+			DisableControlAction(2, 199, true) -- Disable pause screen
+
+			DisableControlAction(0, 59, true) -- Disable steering in vehicle
+			DisableControlAction(0, 71, true) -- Disable driving forward in vehicle
+			DisableControlAction(0, 72, true) -- Disable reversing in vehicle
+
+			DisableControlAction(0, 47, true)  -- Disable weapon
+			DisableControlAction(0, 264, true) -- Disable melee
+			DisableControlAction(0, 257, true) -- Disable melee
+			DisableControlAction(0, 140, true) -- Disable melee
+			DisableControlAction(0, 141, true) -- Disable melee
+			DisableControlAction(0, 142, true) -- Disable melee
+			DisableControlAction(0, 143, true) -- Disable melee
+
+			local playerPed = PlayerPedId()
+			if IsEntityPlayingAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', 3) ~= 1 then
+				exports['bixbi_core']:playAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', -1)
 			end
 		end
 	end)
+end
+
+function IsZiptied(ped)
+	if (IsEntityPlayingAnim(ped, 're@stag_do@idle_a', 'idle_a_ped', 3)) then return true end
+	return false
 end
 
 if (Config.qtarget) then
@@ -188,29 +187,30 @@ end
 --[[---------------------------------------------------------------------
 Hands Up Code
 ]]-----------------------------------------------------------------------
-local isHandsUp = false
-RegisterNetEvent('bixbi_zipties:ToggleHandsUp')
-AddEventHandler('bixbi_zipties:ToggleHandsUp', function()
+local isHandsup = false
+RegisterCommand('handsup', function()
 	local playerPed = PlayerPedId()
 	if (DoesEntityExist(playerPed) and not IsEntityDead(playerPed) and not IsPauseMenuActive()) then 
-		RequestAnimDict('random@mugging3')
-		while not HasAnimDictLoaded('random@mugging3') do
-			Citizen.Wait(100)
-		end
+		-- RequestAnimDict('random@mugging3')
+		-- while not HasAnimDictLoaded('random@mugging3') do
+		-- 	Citizen.Wait(100)
+		-- end
 
-		if isHandsUp then
-			isHandsUp = false
+		if (isHandsup) then
+			isHandsup = false
 			ClearPedSecondaryTask(playerPed)
 		else
-			isHandsUp = true
-			TaskPlayAnim(playerPed, 'random@mugging3', 'handsup_standing_base', 6.0, -6.0, -1, 49, 0, 0, 0, 0)
+			isHandsup = true
+			-- TaskPlayAnim(playerPed, 'random@mugging3', 'handsup_standing_base', 6.0, -6.0, -1, 49, 0, 0, 0, 0)
+			exports['bixbi_core']:playAnim(playerPed, 'random@mugging3', 'handsup_standing_base', -1)
 		end
-		RemoveAnimDict('random@mugging3')
+		-- RemoveAnimDict('random@mugging3')
 	else
-		isHandsUp = false
+		isHandsup = false
 		ClearPedSecondaryTask(playerPed)
 	end
-end)
+end, false)
+RegisterKeyMapping('handsup', 'Handsup', 'keyboard', 'x')
 
 function AreHandsUp(ped)
 	if (IsEntityPlayingAnim(ped, 'random@mugging3', 'handsup_standing_base', 3)) then return true end
