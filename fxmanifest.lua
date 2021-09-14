@@ -7,7 +7,7 @@ author 'Leah#0001'
 version '1.3'
 
 shared_scripts {
-	'@es_extended/imports.lua',
+	'@es_extended/imports.lua', -- Remove this if you're on an ESX version less than 1.3
 	'config.lua'
 }
 
