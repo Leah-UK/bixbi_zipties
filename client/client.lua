@@ -30,14 +30,14 @@ AddEventHandler("bixbi_zipties:startziptie", function(targetId)
 		if closestPlayer ~= -1 and closestDistance <= 2.0 then targetId = GetPlayerServerId(closestPlayer) end
 	end
 	
-	if (AreHandsUp(GetPlayerPed(targetId))) then
+	-- if (AreHandsUp(GetPlayerPed(targetId))) then
 		exports['bixbi_core']:Loading(Config.ZiptieSpeed * 1000, 'Applying zipties to person')
 		Citizen.Wait(Config.ZiptieSpeed * 1000)
 		TriggerServerEvent('bixbi_zipties:ApplyZipties', targetId)
 		exports['bixbi_core']:Notify('success', 'You have ziptied the target.')
-	else
-		exports['bixbi_core']:Notify('error', 'This person doesn\'t have their hands up.')
-	end
+	-- else
+	-- 	exports['bixbi_core']:Notify('error', 'This person doesn\'t have their hands up.')
+	-- end
 	
 end)
 
