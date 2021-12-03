@@ -8,7 +8,7 @@
 - ESX v1 Final, ESX v1.2 or ESX Legacy  
 <i> Can be easily modified for other frameworks</i>
 - <a href='https://github.com/Leah-UK/bixbi_core'>bixbi_core</a>
-- OneSync <b>Legacy</b>
+- OneSync
 
 ---
 
