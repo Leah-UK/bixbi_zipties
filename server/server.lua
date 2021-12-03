@@ -9,7 +9,7 @@ end)
 for k,v in pairs(Config.ZiptieRemovers) do
 	ESX.RegisterUsableItem(k, function(source)
 		local tool = Config.ZiptieRemovers[k]
-		TriggerClientEvent('bixbi_zipties:startziptieremove', source, k)
+		TriggerClientEvent('bixbi_zipties:startziptieremove', source, tool)
 
 		if tool.OneTimeUse == true then
 			local xPlayer = ESX.GetPlayerFromId(source)

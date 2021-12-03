@@ -8,46 +8,42 @@ end)
 
 local isCuffed = false
 local handcuffTimer = {}
-RegisterNetEvent('esx:playerLoaded')
-AddEventHandler("esx:playerLoaded", function(xPlayer)
-    ESX.PlayerData = xPlayer
-	ESX.PlayerLoaded = true
-end)
-
-RegisterNetEvent('esx:onPlayerLogout')
-AddEventHandler('esx:onPlayerLogout', function()
-	ESX.PlayerLoaded = false
-	ESX.PlayerData = {}
-end)
-
---[[---------------------------------------------------------------------
-Ziptie Code
-]]-----------------------------------------------------------------------
 RegisterNetEvent('bixbi_zipties:startziptie')
 AddEventHandler("bixbi_zipties:startziptie", function(targetId)
 	if (targetId == nil) then
 		local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
-		if closestPlayer ~= -1 and closestDistance <= 2.0 then targetId = GetPlayerServerId(closestPlayer) end
+		if closestPlayer ~= -1 and closestDistance <= 2.0 then 
+			targetId = GetPlayerServerId(closestPlayer)
+		else
+			exports['bixbi_core']:Notify('error', 'There isn\'t anyone nearby')
+			return
+		end
 	end
+	while (targetId == nil) do Citizen.Wait(100) end
 	
-	-- if (AreHandsUp(GetPlayerPed(targetId))) then
+	local targetPed = GetPlayerFromServerId(targetId)
+	if (AreHandsUp(GetPlayerPed(targetPed))) then
 		exports['bixbi_core']:Loading(Config.ZiptieSpeed * 1000, 'Applying zipties to person')
 		Citizen.Wait(Config.ZiptieSpeed * 1000)
 		TriggerServerEvent('bixbi_zipties:ApplyZipties', targetId)
 		exports['bixbi_core']:Notify('success', 'You have ziptied the target.')
-	-- else
-	-- 	exports['bixbi_core']:Notify('error', 'This person doesn\'t have their hands up.')
-	-- end
+	else
+		exports['bixbi_core']:Notify('error', 'This person doesn\'t have their hands up.')
+	end
 	
 end)
 
 RegisterNetEvent('bixbi_zipties:startziptieremove')
-AddEventHandler("bixbi_zipties:startziptieremove", function(type, targetId)
+AddEventHandler("bixbi_zipties:startziptieremove", function(tool, targetId)
 	if (targetId == nil) then
 		local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
-		if closestPlayer ~= -1 and closestDistance <= 2.0 then targetId = GetPlayerServerId(closestPlayer) end
+		if closestPlayer ~= -1 and closestDistance <= 2.0 then 
+			targetId = GetPlayerServerId(closestPlayer) 
+		else
+			exports['bixbi_core']:Notify('error', 'There isn\'t anyone nearby')
+			return
+		end
 	end
-	local tool = Config.ZiptieRemovers[type]
 	exports['bixbi_core']:Loading(tool.timer * 1000, 'Removing zipties from person')
 	Citizen.Wait(tool.timer * 1000)
 	
@@ -56,12 +52,8 @@ AddEventHandler("bixbi_zipties:startziptieremove", function(type, targetId)
 end)
 
 function StartHandcuffTimer()
-	if Config.EnableHandcuffTimer and handcuffTimer.active then
-		ESX.ClearTimeout(handcuffTimer.task)
-	end
-
+	if Config.EnableHandcuffTimer and handcuffTimer.active then ESX.ClearTimeout(handcuffTimer.task) end
 	handcuffTimer.active = true
-
 	handcuffTimer.task = ESX.SetTimeout(Config.HandcuffTimer, function()
 		exports['bixbi_core']:Notify('', 'You feel the zipties slowly losing grip and fading away.')
 		TriggerEvent('bixbi_zipties:removeziptie')
@@ -101,10 +93,11 @@ AddEventHandler('bixbi_zipties:removeziptie', function()
 	if (isZiptied) then
 		isZiptied = false
 
-		ClearPedSecondaryTask(playerPed)
 		SetEnableHandcuffs(playerPed, false)
 		DisablePlayerFiring(playerPed, false)
 		SetPedCanPlayGestureAnims(playerPed, true)
+		ClearPedTasks(playerPed)
+		ClearPedSecondaryTask(playerPed)
 		DisplayRadar(true)
 
 		if handcuffTimer.active then
@@ -116,7 +109,7 @@ end)
 function ZiptieLoop()
 	Citizen.CreateThread(function()
 		while (isZiptied) do
-			Citizen.Wait(100)
+			Citizen.Wait(0)
 
 			-- EnableControlAction(0, 47, true)
 			DisableControlAction(0, 24, true) -- Attack
@@ -152,7 +145,7 @@ function ZiptieLoop()
 			DisableControlAction(0, 143, true) -- Disable melee
 
 			local playerPed = PlayerPedId()
-			if IsEntityPlayingAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', 3) ~= 1 then
+			if (IsEntityPlayingAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', 3) ~= 1 and isZiptied) then
 				exports['bixbi_core']:playAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', -1)
 			end
 		end
@@ -224,3 +217,18 @@ function AreHandsUp(ped)
 	if (IsEntityPlayingAnim(ped, 'random@mugging3', 'handsup_standing_base', 3)) then return true end
 	return false
 end
+
+--[[--------------------------------------------------
+Setup
+--]]--------------------------------------------------
+RegisterNetEvent('esx:playerLoaded')
+AddEventHandler("esx:playerLoaded", function(xPlayer)
+    ESX.PlayerData = xPlayer
+	ESX.PlayerLoaded = true
+end)
+
+RegisterNetEvent('esx:onPlayerLogout')
+AddEventHandler('esx:onPlayerLogout', function()
+	ESX.PlayerLoaded = false
+	ESX.PlayerData = {}
+end)
