@@ -2,7 +2,7 @@ ESX = nil
 Citizen.CreateThread(function()
     while ESX == nil do
         TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-        Citizen.Wait(10)
+        Citizen.Wait(100)
     end
 end)
 
@@ -77,9 +77,7 @@ AddEventHandler("bixbi_zipties:ziptie", function(source, tool)
 		SetPedCanPlayGestureAnims(playerPed, false)
 		DisplayRadar(false)
 
-		if handcuffTimer.active then
-			ESX.ClearTimeout(handcuffTimer.task)
-		end
+		if handcuffTimer.active then ESX.ClearTimeout(handcuffTimer.task) end
 
 		StartHandcuffTimer()
 		ZiptieLoop()
@@ -164,7 +162,7 @@ if (Config.qtarget) then
 				{
 					icon = "fak fa-handcuffs",
 					label = "Ziptie",
-					required_item = "zipties",
+					item = "zipties",
 					canInteract = function(entity)
 						if IsPedAPlayer(entity) then
 							if (AreHandsUp(entity) and (IsPedArmed(PlayerPedId(), 4) or IsPedArmed(PlayerPedId(), 1)) and not IsPedDeadOrDying(entity, 1)) then 
