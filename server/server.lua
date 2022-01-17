@@ -1,9 +1,8 @@
 ESX = nil
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
-
 ESX.RegisterUsableItem('zipties', function(source)
-    TriggerClientEvent('bixbi_zipties:startziptie', source)
+    TriggerClientEvent('bixbi_zipties:startZiptie', source)
 end)
 
 for k,v in pairs(Config.ZiptieRemovers) do

@@ -8,8 +8,8 @@ end)
 
 local isCuffed = false
 local handcuffTimer = {}
-RegisterNetEvent('bixbi_zipties:startziptie')
-AddEventHandler("bixbi_zipties:startziptie", function(targetId)
+RegisterNetEvent('bixbi_zipties:startZiptie')
+AddEventHandler("bixbi_zipties:startZiptie", function(targetId)
 	if (targetId == nil) then
 		local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
 		if closestPlayer ~= -1 and closestDistance <= 2.0 then 
@@ -20,9 +20,7 @@ AddEventHandler("bixbi_zipties:startziptie", function(targetId)
 		end
 	end
 	while (targetId == nil) do Citizen.Wait(100) end
-	
-	local targetPed = GetPlayerFromServerId(targetId)
-	if (AreHandsUp(GetPlayerPed(targetPed))) then
+	if (Player(targetId).state.handsup) then
 		exports['bixbi_core']:Loading(Config.ZiptieSpeed * 1000, 'Applying zipties to person')
 		Citizen.Wait(Config.ZiptieSpeed * 1000)
 		TriggerServerEvent('bixbi_zipties:ApplyZipties', targetId)
@@ -61,14 +59,14 @@ function StartHandcuffTimer()
 	end)
 end
 
-local isZiptied = false
+-- local isZiptied = false
 RegisterNetEvent('bixbi_zipties:ziptie')
 AddEventHandler("bixbi_zipties:ziptie", function(source, tool)
 	local playerPed = PlayerPedId()
 	exports['bixbi_core']:Notify('error', 'You have been ziptied.')
 
-	if (not isZiptied) then
-		isZiptied = true
+	if (not LocalPlayer.state.ziptied) then
+        LocalPlayer.state:set('ziptied', true, true)
 		exports['bixbi_core']:playAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', -1)
 		
 		SetEnableHandcuffs(playerPed, true)
@@ -88,8 +86,8 @@ RegisterNetEvent('bixbi_zipties:removeziptie')
 AddEventHandler('bixbi_zipties:removeziptie', function()
 	local playerPed = PlayerPedId()
 	exports['bixbi_core']:Notify('', 'You are free again.')
-	if (isZiptied) then
-		isZiptied = false
+	if (LocalPlayer.state.ziptied) then
+		LocalPlayer.state:set('ziptied', false, true)
 
 		SetEnableHandcuffs(playerPed, false)
 		DisablePlayerFiring(playerPed, false)
@@ -98,15 +96,13 @@ AddEventHandler('bixbi_zipties:removeziptie', function()
 		ClearPedSecondaryTask(playerPed)
 		DisplayRadar(true)
 
-		if handcuffTimer.active then
-			ESX.ClearTimeout(handcuffTimer.task)
-		end
+		if handcuffTimer.active then ESX.ClearTimeout(handcuffTimer.task) end
 	end
 end)
 
 function ZiptieLoop()
 	Citizen.CreateThread(function()
-		while (isZiptied) do
+		while (LocalPlayer.state.ziptied) do
 			Citizen.Wait(0)
 
 			-- EnableControlAction(0, 47, true)
@@ -143,17 +139,17 @@ function ZiptieLoop()
 			DisableControlAction(0, 143, true) -- Disable melee
 
 			local playerPed = PlayerPedId()
-			if (IsEntityPlayingAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', 3) ~= 1 and isZiptied) then
+			if (IsEntityPlayingAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', 3) ~= 1 and LocalPlayer.state.ziptied) then
 				exports['bixbi_core']:playAnim(playerPed, 're@stag_do@idle_a', 'idle_a_ped', -1)
 			end
 		end
 	end)
 end
 
-function IsZiptied(ped)
-	if (IsEntityPlayingAnim(ped, 're@stag_do@idle_a', 'idle_a_ped', 3)) then return true end
-	return false
-end
+-- function IsZiptied(ped)
+-- 	if (IsEntityPlayingAnim(ped, 're@stag_do@idle_a', 'idle_a_ped', 3)) then return true end
+-- 	return false
+-- end
 
 if (Config.qtarget) then
 	Citizen.CreateThread(function()
@@ -165,15 +161,11 @@ if (Config.qtarget) then
 					item = "zipties",
 					canInteract = function(entity)
 						if IsPedAPlayer(entity) then
-							if (AreHandsUp(entity) and (IsPedArmed(PlayerPedId(), 4) or IsPedArmed(PlayerPedId(), 1)) and not IsPedDeadOrDying(entity, 1)) then 
-								return true
-							else
-								return false
-							end
+							return (not IsPedDeadOrDying(entity, 1) and Player(GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))).state.handsup)
 						end
 					end,
 					action = function(entity)
-						TriggerEvent('bixbi_zipties:startziptie', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+						TriggerEvent('bixbi_zipties:startZiptie', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
 					end
 				},
 			},
@@ -181,41 +173,30 @@ if (Config.qtarget) then
 		})
 	end)
 end
-
-
 --[[---------------------------------------------------------------------
 Hands Up Code
 ]]-----------------------------------------------------------------------
-local isHandsup = false
+-- local isHandsup = false
 RegisterCommand('handsup', function()
 	local playerPed = PlayerPedId()
 	if (DoesEntityExist(playerPed) and not IsEntityDead(playerPed) and not IsPauseMenuActive()) then 
-		-- RequestAnimDict('random@mugging3')
-		-- while not HasAnimDictLoaded('random@mugging3') do
-		-- 	Citizen.Wait(100)
-		-- end
-
-		if (isHandsup) then
-			isHandsup = false
+		if (LocalPlayer.state.handsup) then
 			ClearPedSecondaryTask(playerPed)
 		else
-			isHandsup = true
-			-- TaskPlayAnim(playerPed, 'random@mugging3', 'handsup_standing_base', 6.0, -6.0, -1, 49, 0, 0, 0, 0)
 			exports['bixbi_core']:playAnim(playerPed, 'random@mugging3', 'handsup_standing_base', -1)
 		end
-		-- RemoveAnimDict('random@mugging3')
+        LocalPlayer.state:set('handsup', not LocalPlayer.state.handsup, true)
 	else
-		isHandsup = false
+		LocalPlayer.state:set('handsup', false, true)
 		ClearPedSecondaryTask(playerPed)
 	end
 end, false)
 RegisterKeyMapping('handsup', 'Handsup', 'keyboard', 'x')
 
-function AreHandsUp(ped)
-	if (IsEntityPlayingAnim(ped, 'random@mugging3', 'handsup_standing_base', 3)) then return true end
-	return false
-end
-
+-- function AreHandsUp(ped)
+-- 	if (IsEntityPlayingAnim(ped, 'random@mugging3', 'handsup_standing_base', 3)) then return true end
+-- 	return false
+-- end
 --[[--------------------------------------------------
 Setup
 --]]--------------------------------------------------
