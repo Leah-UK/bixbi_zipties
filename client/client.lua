@@ -20,7 +20,9 @@ AddEventHandler("bixbi_zipties:startZiptie", function(targetId)
 		end
 	end
 	while (targetId == nil) do Citizen.Wait(100) end
-	if (Player(targetId).state.handsup) then
+    local targetPed = GetPlayerFromServerId(targetId)
+	if (AreHandsUp(GetPlayerPed(targetPed))) then
+	-- if (Player(targetId).state.handsup ~= nil and Player(targetId).state.handsup) then
 		exports['bixbi_core']:Loading(Config.ZiptieSpeed * 1000, 'Applying zipties to person')
 		Citizen.Wait(Config.ZiptieSpeed * 1000)
 		TriggerServerEvent('bixbi_zipties:ApplyZipties', targetId)
@@ -161,8 +163,9 @@ if (Config.qtarget) then
 					item = "zipties",
 					canInteract = function(entity)
 						if IsPedAPlayer(entity) then
-							return (not IsPedDeadOrDying(entity, 1) and Player(GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))).state.handsup)
-						end
+							if (AreHandsUp(entity) and not IsPedDeadOrDying(entity, 1)) then return true end
+                            return false
+                        end
 					end,
 					action = function(entity)
 						TriggerEvent('bixbi_zipties:startZiptie', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
@@ -193,10 +196,10 @@ RegisterCommand('handsup', function()
 end, false)
 RegisterKeyMapping('handsup', 'Handsup', 'keyboard', 'x')
 
--- function AreHandsUp(ped)
--- 	if (IsEntityPlayingAnim(ped, 'random@mugging3', 'handsup_standing_base', 3)) then return true end
--- 	return false
--- end
+function AreHandsUp(ped)
+	if (IsEntityPlayingAnim(ped, 'random@mugging3', 'handsup_standing_base', 3)) then return true end
+	return false
+end
 --[[--------------------------------------------------
 Setup
 --]]--------------------------------------------------
