@@ -36,6 +36,7 @@ AddEventHandler('bixbi_zipties:RemoveZipties', function(targetId)
 end)
 
 AddEventHandler('onResourceStart', function(resourceName)
+	if resourceName ~= GetCurrentResourceName() then return end
 	if (GetResourceState('bixbi_core') ~= 'started' ) then
         print('Bixbi_Zipties - ERROR: Bixbi_Core hasn\'t been found! This could cause errors!')
         StopResource(resourceName)
